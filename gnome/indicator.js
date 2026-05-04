@@ -350,7 +350,8 @@ class CodeBurnIndicator extends PanelMenu.Button {
     reportBtn.connect('clicked', () => this._spawnTerminal(['codeburn', 'report', '--period', this._period, '--provider', this._provider]));
     footer.add_child(reportBtn);
 
-    const prefsBtn = new St.Button({ label: 'Preferences', style_class: 'codeburn-footer-btn', can_focus: true });
+    const prefsBtn = new St.Button({ style_class: 'codeburn-footer-btn codeburn-prefs-btn', can_focus: true });
+    prefsBtn.set_child(new St.Icon({ icon_name: 'emblem-system-symbolic', style_class: 'codeburn-prefs-icon' }));
     prefsBtn.connect('clicked', () => {
       this._extension.openPreferences();
       this.menu.close();
