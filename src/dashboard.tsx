@@ -247,16 +247,17 @@ function DailyActivity({ projects, days = 14, pw, bw }: { projects: ProjectSumma
   )
 }
 
-const _homeEncoded = homedir().replace(/\//g, '-')
-
-function shortProject(encoded: string): string {
-  let path = encoded.replace(/^-/, '')
-  if (path.startsWith(_homeEncoded.replace(/^-/, ''))) {
-    path = path.slice(_homeEncoded.replace(/^-/, '').length).replace(/^-/, '')
-  }
-  path = path.replace(/^private-tmp-[^-]+-[^-]+-/, '').replace(/^private-tmp-/, '').replace(/^tmp-/, '')
+export function shortProject(absPath: string): string {
+  const home = homedir()
+  const homePrefix = home.endsWith('/') ? home : home + '/'
+  let path: string
+  if (absPath === home) path = ''
+  else if (absPath.startsWith(homePrefix)) path = absPath.slice(homePrefix.length)
+  else path = absPath
+  path = path.replace(/^\/+/, '')
+  path = path.replace(/^private\/tmp\/[^/]+\/[^/]+\//, '').replace(/^private\/tmp\//, '').replace(/^tmp\//, '')
   if (!path) return 'home'
-  const parts = path.split('-').filter(Boolean)
+  const parts = path.split('/').filter(Boolean)
   if (parts.length <= 3) return parts.join('/')
   return parts.slice(-3).join('/')
 }
@@ -282,7 +283,7 @@ function ProjectBreakdown({ projects, pw, bw, budgets }: { projects: ProjectSumm
         return (
           <Text key={`${project.project}-${i}`} wrap="truncate-end">
             <HBar value={project.totalCostUSD} max={maxCost} width={bw} />
-            <Text dimColor> {fit(shortProject(project.project), nw)}</Text>
+            <Text dimColor> {fit(shortProject(project.projectPath), nw)}</Text>
             <Text color={GOLD}>{formatCost(project.totalCostUSD).padStart(8)}</Text>
             <Text color={GOLD}>{avgCost.padStart(PROJECT_COL_AVG)}</Text>
             <Text>{String(project.sessions.length).padStart(6)}</Text>
@@ -442,7 +443,7 @@ const TOP_SESSIONS_CALLS_COL = 6
 
 function TopSessions({ projects, pw, bw }: { projects: ProjectSummary[]; pw: number; bw: number }) {
   const allSessions = projects.flatMap(p =>
-    p.sessions.map(s => ({ ...s, projectName: p.project }))
+    p.sessions.map(s => ({ ...s, projectPath: p.projectPath }))
   )
   const top = [...allSessions].sort((a, b) => b.totalCostUSD - a.totalCostUSD).slice(0, 5)
 
@@ -460,7 +461,7 @@ function TopSessions({ projects, pw, bw }: { projects: ProjectSummary[]; pw: num
         const date = session.firstTimestamp
           ? session.firstTimestamp.slice(0, TOP_SESSIONS_DATE_LEN)
           : '----------'
-        const label = `${date} ${shortProject(session.projectName)}`
+        const label = `${date} ${shortProject(session.projectPath)}`
         return (
           <Text key={`${session.sessionId}-${i}`} wrap="truncate-end">
             <HBar value={session.totalCostUSD} max={maxCost} width={bw} />
