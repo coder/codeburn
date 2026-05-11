@@ -24,6 +24,23 @@ export function getVSCodeGlobalStoragePath(extensionId: string): string {
 
 export async function discoverClineTasks(extensionId: string, providerName: string, displayName: string, overrideDir?: string): Promise<SessionSource[]> {
   const baseDir = overrideDir ?? getVSCodeGlobalStoragePath(extensionId)
+  return discoverClineTasksInBaseDirs([baseDir], providerName, displayName)
+}
+
+export async function discoverClineTasksInBaseDirs(baseDirs: string[], providerName: string, displayName: string): Promise<SessionSource[]> {
+  const sources: SessionSource[] = []
+  const seen = new Set<string>()
+  for (const baseDir of baseDirs) {
+    for (const source of await discoverClineTasksInBaseDir(baseDir, providerName, displayName)) {
+      if (seen.has(source.path)) continue
+      seen.add(source.path)
+      sources.push(source)
+    }
+  }
+  return sources
+}
+
+async function discoverClineTasksInBaseDir(baseDir: string, providerName: string, displayName: string): Promise<SessionSource[]> {
   const tasksDir = join(baseDir, 'tasks')
   const sources: SessionSource[] = []
 
@@ -51,11 +68,11 @@ export async function discoverClineTasks(extensionId: string, providerName: stri
 
 const MODEL_TAG_RE = /<model>([^<]+)<\/model>/
 
-function extractModelFromHistory(taskDir: string): Promise<string> {
+function extractModelFromHistory(taskDir: string, fallbackModel: string): Promise<string> {
   return readFile(join(taskDir, 'api_conversation_history.json'), 'utf-8')
     .then(raw => {
       const msgs = JSON.parse(raw) as Array<{ role?: string; content?: Array<{ text?: string }> }>
-      if (!Array.isArray(msgs)) return 'cline-auto'
+      if (!Array.isArray(msgs)) return fallbackModel
       for (const msg of msgs) {
         if (msg.role !== 'user' || !Array.isArray(msg.content)) continue
         for (const block of msg.content) {
@@ -66,12 +83,12 @@ function extractModelFromHistory(taskDir: string): Promise<string> {
           }
         }
       }
-      return 'cline-auto'
+      return fallbackModel
     })
-    .catch(() => 'cline-auto')
+    .catch(() => fallbackModel)
 }
 
-export function createClineParser(source: SessionSource, seenKeys: Set<string>, providerName: string): SessionParser {
+export function createClineParser(source: SessionSource, seenKeys: Set<string>, providerName: string, fallbackModel = 'cline-auto'): SessionParser {
   return {
     async *parse(): AsyncGenerator<ParsedProviderCall> {
       const taskDir = source.path
@@ -93,7 +110,7 @@ export function createClineParser(source: SessionSource, seenKeys: Set<string>, 
 
       if (!Array.isArray(uiMessages)) return
 
-      const model = await extractModelFromHistory(taskDir)
+      const model = await extractModelFromHistory(taskDir, fallbackModel)
 
       let userMessage = ''
       for (const msg of uiMessages) {
