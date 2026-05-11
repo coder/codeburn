@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed (CLI)
+- **Claude 1-hour cache writes use the correct price.** Claude Code records
+  5-minute and 1-hour prompt-cache writes separately in
+  `usage.cache_creation`. CodeBurn now prices the 1-hour portion at 2x base
+  input cost (1.6x the LiteLLM 5-minute cache-write rate) while preserving the
+  existing legacy fallback when only `cache_creation_input_tokens` is present.
+  Daily cache version bumped to v6 so previously cached under-reported costs
+  are recomputed from raw sessions.
+  This fixes under-reporting for plan-mode and long agent sessions that rely on
+  1-hour cache writes. Closes #276.
+
 ## 0.9.8 - 2026-05-10
 
 ### Added (CLI)
