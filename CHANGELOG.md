@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added (CLI)
+- **IBM Bob provider.** Discovers IBM Bob IDE task history, reuses the
+  Cline-family parser for token/cost records, extracts model tags and
+  workspace-based project names from session data. Closes #248.
+
+### Fixed (CLI)
+- **Claude 1-hour cache write pricing.** 1-hour cache writes are now priced
+  at 2x base input (previously used the 5-minute 1.25x rate for all writes).
+  Daily cache bumped to v6 so stale totals are recomputed. Closes #276.
+
 ## 0.9.8 - 2026-05-10
 
 ### Added (CLI)
