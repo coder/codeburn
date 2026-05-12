@@ -247,13 +247,15 @@ function DailyActivity({ projects, days = 14, pw, bw }: { projects: ProjectSumma
   )
 }
 
+const _home = homedir()
+const _homePrefix = _home.endsWith('/') ? _home : _home + '/'
+
 export function shortProject(absPath: string): string {
-  const home = homedir()
-  const homePrefix = home.endsWith('/') ? home : home + '/'
+  const normalized = absPath.replace(/\\/g, '/')
   let path: string
-  if (absPath === home) path = ''
-  else if (absPath.startsWith(homePrefix)) path = absPath.slice(homePrefix.length)
-  else path = absPath
+  if (normalized === _home) path = ''
+  else if (normalized.startsWith(_homePrefix)) path = normalized.slice(_homePrefix.length)
+  else path = normalized
   path = path.replace(/^\/+/, '')
   path = path.replace(/^private\/tmp\/[^/]+\/[^/]+\//, '').replace(/^private\/tmp\//, '').replace(/^tmp\//, '')
   if (!path) return 'home'

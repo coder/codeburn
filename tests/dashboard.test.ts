@@ -56,7 +56,7 @@ function makeProject(name: string, sessions: SessionSummary[]): ProjectSummary {
 
 // Logic replicated from TopSessions component
 function getTopSessions(projects: ProjectSummary[], n = 5) {
-  const all = projects.flatMap(p => p.sessions.map(s => ({ ...s, projectName: p.project })))
+  const all = projects.flatMap(p => p.sessions.map(s => ({ ...s, projectPath: p.projectPath })))
   return [...all].sort((a, b) => b.totalCostUSD - a.totalCostUSD).slice(0, n)
 }
 
