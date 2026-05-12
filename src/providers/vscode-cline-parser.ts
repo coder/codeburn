@@ -67,25 +67,40 @@ async function discoverClineTasksInBaseDir(baseDir: string, providerName: string
 }
 
 const MODEL_TAG_RE = /<model>([^<]+)<\/model>/
+const WORKSPACE_DIR_RE = /Current Workspace Directory \(([^)]+)\)/
 
-function extractModelFromHistory(taskDir: string, fallbackModel: string): Promise<string> {
+type HistoryMeta = { model: string; workspace: string | null }
+
+function extractHistoryMeta(taskDir: string, fallbackModel: string): Promise<HistoryMeta> {
   return readFile(join(taskDir, 'api_conversation_history.json'), 'utf-8')
     .then(raw => {
       const msgs = JSON.parse(raw) as Array<{ role?: string; content?: Array<{ text?: string }> }>
-      if (!Array.isArray(msgs)) return fallbackModel
+      if (!Array.isArray(msgs)) return { model: fallbackModel, workspace: null }
+      let model: string | null = null
+      let workspace: string | null = null
       for (const msg of msgs) {
         if (msg.role !== 'user' || !Array.isArray(msg.content)) continue
         for (const block of msg.content) {
-          const match = typeof block.text === 'string' && MODEL_TAG_RE.exec(block.text)
-          if (match) {
-            const raw = match[1]
-            return raw.includes('/') ? raw.split('/').pop()! : raw
+          if (typeof block.text !== 'string') continue
+          if (!model) {
+            const mm = MODEL_TAG_RE.exec(block.text)
+            if (mm) model = mm[1].includes('/') ? mm[1].split('/').pop()! : mm[1]
           }
+          if (!workspace) {
+            const wm = WORKSPACE_DIR_RE.exec(block.text)
+            if (wm) workspace = wm[1]
+          }
+          if (model && workspace) break
         }
+        if (model && workspace) break
       }
-      return fallbackModel
+      return { model: model ?? fallbackModel, workspace }
     })
-    .catch(() => fallbackModel)
+    .catch(() => ({ model: fallbackModel, workspace: null }))
+}
+
+function workspaceToProject(workspace: string): string {
+  return basename(workspace) || workspace
 }
 
 export function createClineParser(source: SessionSource, seenKeys: Set<string>, providerName: string, fallbackModel = 'cline-auto'): SessionParser {
@@ -110,7 +125,10 @@ export function createClineParser(source: SessionSource, seenKeys: Set<string>, 
 
       if (!Array.isArray(uiMessages)) return
 
-      const model = await extractModelFromHistory(taskDir, fallbackModel)
+      const meta = await extractHistoryMeta(taskDir, fallbackModel)
+      const model = meta.model
+      const project = meta.workspace ? workspaceToProject(meta.workspace) : undefined
+      const projectPath = meta.workspace ?? undefined
 
       let userMessage = ''
       for (const msg of uiMessages) {
@@ -173,6 +191,8 @@ export function createClineParser(source: SessionSource, seenKeys: Set<string>, 
           deduplicationKey: dedupKey,
           userMessage: index === 0 ? userMessage : '',
           sessionId: taskId,
+          project,
+          projectPath,
         }
       }
     },
