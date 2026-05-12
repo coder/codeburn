@@ -2,16 +2,15 @@
 
 ## Unreleased
 
+### Added (CLI)
+- **IBM Bob provider.** Discovers IBM Bob IDE task history, reuses the
+  Cline-family parser for token/cost records, extracts model tags and
+  workspace-based project names from session data. Closes #248.
+
 ### Fixed (CLI)
-- **Claude 1-hour cache writes use the correct price.** Claude Code records
-  5-minute and 1-hour prompt-cache writes separately in
-  `usage.cache_creation`. CodeBurn now prices the 1-hour portion at 2x base
-  input cost (1.6x the LiteLLM 5-minute cache-write rate) while preserving the
-  existing legacy fallback when only `cache_creation_input_tokens` is present.
-  Daily cache version bumped to v6 so previously cached under-reported costs
-  are recomputed from raw sessions.
-  This fixes under-reporting for plan-mode and long agent sessions that rely on
-  1-hour cache writes. Closes #276.
+- **Claude 1-hour cache write pricing.** 1-hour cache writes are now priced
+  at 2x base input (previously used the 5-minute 1.25x rate for all writes).
+  Daily cache bumped to v6 so stale totals are recomputed. Closes #276.
 
 ## 0.9.8 - 2026-05-10
 
