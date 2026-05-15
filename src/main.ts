@@ -321,7 +321,6 @@ program
     const period = toPeriod(opts.period)
     if (opts.format === 'json') {
       await loadPricing()
-      await hydrateCache()
       if (customRange) {
         const label = formatDateRangeLabel(opts.from, opts.to)
         const projects = filterProjectsByName(
@@ -335,7 +334,6 @@ program
       }
       return
     }
-    await hydrateCache()
     const customRangeLabel = customRange ? formatDateRangeLabel(opts.from, opts.to) : undefined
     await renderDashboard(period, opts.provider, opts.refresh, opts.project, opts.exclude, customRange, customRangeLabel)
   })
@@ -573,7 +571,6 @@ program
       await runJsonReport('today', opts.provider, opts.project, opts.exclude)
       return
     }
-    await hydrateCache()
     await renderDashboard('today', opts.provider, opts.refresh, opts.project, opts.exclude)
   })
 
@@ -591,7 +588,6 @@ program
       await runJsonReport('month', opts.provider, opts.project, opts.exclude)
       return
     }
-    await hydrateCache()
     await renderDashboard('month', opts.provider, opts.refresh, opts.project, opts.exclude)
   })
 
@@ -608,7 +604,6 @@ program
   .action(async (opts) => {
     assertFormat(opts.format, ['csv', 'json'], 'export')
     await loadPricing()
-    await hydrateCache()
     const pf = opts.provider
     const fp = (p: ProjectSummary[]) => filterProjectsByName(p, opts.project, opts.exclude)
     let customRange: DateRange | null = null
@@ -899,7 +894,6 @@ program
   .option('--provider <provider>', 'Filter by provider (e.g. claude, gemini, cursor, copilot)', 'all')
   .action(async (opts) => {
     await loadPricing()
-    await hydrateCache()
     const { range, label } = getDateRange(opts.period)
     const projects = await parseAllSessions(range, opts.provider)
     await runOptimize(projects, label, range)
@@ -912,7 +906,6 @@ program
   .option('--provider <provider>', 'Filter by provider (e.g. claude, gemini, cursor, copilot)', 'all')
   .action(async (opts) => {
     await loadPricing()
-    await hydrateCache()
     const { range } = getDateRange(opts.period)
     await renderCompare(range, opts.provider)
   })
@@ -933,7 +926,6 @@ program
   .action(async (opts) => {
     const { aggregateModels, renderTable, renderMarkdown, renderJson, renderCsv } = await import('./models-report.js')
     await loadPricing()
-    await hydrateCache()
 
     let range
     if (opts.from || opts.to) {
@@ -981,7 +973,6 @@ program
   .action(async (opts) => {
     const { computeYield, formatYieldSummary } = await import('./yield.js')
     await loadPricing()
-    await hydrateCache()
     const { range, label } = getDateRange(opts.period)
     console.log(`\n  Analyzing yield for ${label}...\n`)
     const summary = await computeYield(range, process.cwd())
