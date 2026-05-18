@@ -1560,6 +1560,7 @@ function providerCallToCachedTurn(call: ParsedProviderCall): CachedTurn {
       deduplicationKey: call.deduplicationKey,
       project: call.project,
       projectPath: call.projectPath,
+      toolSequence: call.toolSequence,
     }],
   }
 }
@@ -1597,6 +1598,7 @@ function cachedCallToApiCall(call: CachedCall): ParsedApiCall {
     bashCommands: call.bashCommands,
     deduplicationKey: call.deduplicationKey,
     cacheCreationOneHourTokens: u.cacheCreationOneHourTokens || undefined,
+    toolSequence: call.toolSequence,
   }
 }
 

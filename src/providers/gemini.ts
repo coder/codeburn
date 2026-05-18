@@ -79,6 +79,7 @@ function parseSession(data: GeminiSession, seenKeys: Set<string>): ParsedProvide
   let totalThoughts = 0
   const allTools: string[] = []
   const bashCommands: string[] = []
+  const toolSequence: string[][] = []
   let model = ''
 
   for (const msg of geminiMessages) {
@@ -90,13 +91,16 @@ function parseSession(data: GeminiSession, seenKeys: Set<string>): ParsedProvide
     if (msg.model && !model) model = msg.model
 
     if (msg.toolCalls) {
+      const msgTools: string[] = []
       for (const tc of msg.toolCalls) {
         const mapped = toolNameMap[tc.displayName ?? ''] ?? toolNameMap[tc.name] ?? tc.displayName ?? tc.name
         allTools.push(mapped)
+        msgTools.push(mapped)
         if (mapped === 'Bash' && tc.args && typeof tc.args.command === 'string') {
           bashCommands.push(...extractBashCommands(tc.args.command))
         }
       }
+      if (msgTools.length > 0) toolSequence.push(msgTools)
     }
   }
 
@@ -137,6 +141,7 @@ function parseSession(data: GeminiSession, seenKeys: Set<string>): ParsedProvide
     costUSD,
     tools: [...new Set(allTools)],
     bashCommands: [...new Set(bashCommands)],
+    toolSequence: toolSequence.length > 1 ? toolSequence : undefined,
     timestamp: tsDate.toISOString(),
     speed: 'standard',
     deduplicationKey: dedupKey,

@@ -29,6 +29,7 @@ export type CachedCall = {
   deduplicationKey: string
   project?: string
   projectPath?: string
+  toolSequence?: string[][]
 }
 
 export type CachedTurn = {

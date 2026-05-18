@@ -216,18 +216,21 @@ function parseToolArguments(raw: string | Record<string, unknown> | null | undef
   }
 }
 
-function extractTools(messages: VibeMessage[]): { tools: string[]; bashCommands: string[] } {
+function extractTools(messages: VibeMessage[]): { tools: string[]; bashCommands: string[]; toolSequence: string[][] } {
   const tools: string[] = []
   const bashCommands: string[] = []
+  const toolSequence: string[][] = []
 
   for (const message of messages) {
     if (message.role !== 'assistant') continue
+    const msgTools: string[] = []
     for (const toolCall of message.tool_calls ?? []) {
       const rawName = toolCall.function?.name
       if (!rawName) continue
 
       const mappedName = toolNameMap[rawName] ?? rawName
       tools.push(mappedName)
+      msgTools.push(mappedName)
 
       if (mappedName !== 'Bash') continue
       const args = parseToolArguments(toolCall.function?.arguments)
@@ -236,11 +239,13 @@ function extractTools(messages: VibeMessage[]): { tools: string[]; bashCommands:
         bashCommands.push(...extractBashCommands(command))
       }
     }
+    if (msgTools.length > 0) toolSequence.push(msgTools)
   }
 
   return {
     tools: [...new Set(tools)],
     bashCommands: [...new Set(bashCommands)],
+    toolSequence,
   }
 }
 
@@ -287,7 +292,7 @@ function createParser(source: SessionSource, seenKeys: Set<string>): SessionPars
 
       const messages = await readMessages(messagesPath)
       const model = resolveModel(metadata)
-      const { tools, bashCommands } = extractTools(messages)
+      const { tools, bashCommands, toolSequence } = extractTools(messages)
       const costUSD = calculateSessionCost(metadata, model, inputTokens, outputTokens)
 
       yield {
@@ -303,6 +308,7 @@ function createParser(source: SessionSource, seenKeys: Set<string>): SessionPars
         costUSD,
         tools,
         bashCommands,
+        toolSequence: toolSequence.length > 1 ? toolSequence : undefined,
         timestamp: metadata.end_time ?? metadata.start_time ?? '',
         speed: 'standard',
         deduplicationKey,
