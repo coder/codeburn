@@ -2,52 +2,54 @@
 
 ## Unreleased
 
+## 0.9.10 - 2026-05-20
+
 ### Added (CLI)
-- **Agent and subagent tracking coverage.** Gemini sessions now emit one
-  provider call per assistant message with token usage instead of one aggregate
-  call per session, preserving per-message tools, bash commands, timestamps,
-  and nearest user prompts. Existing cached aggregate Gemini entries are
-  reparsed so the new per-message shape takes effect, and per-tool counts may
-  increase because repeated tools are now attributed to the specific Gemini
-  message that used them. Claude discovery also scans direct project-level
-  `subagents/*.jsonl` files, and Codex agent tool normalization is covered by
-  regression tests. Addresses #336.
-- **Multiple subscription plans can be tracked at the same time.**
-  `codeburn plan set` now stores plans in a provider-keyed `plans` map, so
-  setting a Codex custom plan no longer overwrites an existing Claude plan.
-  `codeburn plan reset --provider <name>` removes only that provider's plan,
-  while `codeburn plan reset` remains a full reset. The dashboard and JSON
-  outputs include one overage summary per active provider plan. Aggregate
-  `all` plans remain mutually exclusive with provider-specific plans to avoid
-  double-counted overage rows. Existing single-plan `plan` config files
-  continue to load as a backward-compatible fallback, and subsequent writes
-  save the new `plans` map format. Preset plans now reject mismatched
-  `--provider` scopes instead of silently ignoring them. Closes #299.
-- **Mistral Vibe provider.** CodeBurn now reads Mistral Vibe session folders
-  from `$VIBE_HOME/logs/session/` or `~/.vibe/logs/session/`, using
-  `meta.json` for cumulative prompt/completion tokens, model pricing, and
-  timestamps, and `messages.jsonl` for user prompts and tool calls. Subagent
-  sessions under a parent session's `agents/` folder are tracked separately.
-  Closes #283.
-- **Kimi Code CLI provider.** CodeBurn now reads Kimi session usage from
-  `$KIMI_SHARE_DIR/sessions/` or `~/.kimi/sessions/`, including subagent
-  `wire.jsonl` files. The parser consumes Kimi's official `StatusUpdate`
-  token usage fields (`input_other`, `input_cache_read`,
-  `input_cache_creation`, `output`), normalizes Kimi tool names such as
-  `Shell`, `ReadFile`, and `WriteFile`, and maps hidden managed Kimi Code
-  model aliases to priced Kimi K2 entries.
+- **Agent and subagent tracking coverage across providers.** Gemini sessions
+  now emit one provider call per assistant message with token usage instead of
+  one aggregate call per session, preserving per-message tools, bash commands,
+  timestamps, and nearest user prompts. Existing cached aggregate Gemini
+  entries are reparsed so the new per-message shape takes effect, and per-tool
+  counts may increase because repeated tools are now attributed to the specific
+  Gemini message that used them. Claude discovery also scans direct
+  project-level `subagents/*.jsonl` files, and Codex agent tool normalization
+  is covered by regression tests. Addresses #336. Thanks @ozymandiashh. (#340)
+- **Optimize tab with retry tax, routing waste, and token display modes.** New
+  `codeburn optimize` surface in the dashboard and menubar, with daily budget
+  alerts and project drill-down. (#349)
 
 ### Fixed (CLI)
 - **OpenCode child sessions are attributed to their root session.** The
   OpenCode parser now walks the unarchived `session.parent_id` subtree so
   child and grandchild agent sessions contribute token and tool usage under
   the discovered root session while still excluding child sessions from
-  top-level discovery to avoid double counting.
+  top-level discovery to avoid double counting. Thanks @ozymandiashh. (#343)
 - **OpenCode router sessions with missing usage are still reported.**
   Some OpenCode router/provider combinations can persist assistant messages
   with text or tool activity but zero token and cost fields. The OpenCode
   parser now keeps those turns as zero-cost calls instead of dropping the
-  session entirely. Closes #341.
+  session entirely. Closes #341. Thanks @ozymandiashh. (#342)
+- **OpenCode and Goose sessions on fresh installs.** Both providers returned
+  zero sessions on first run when their on-disk directories did not yet exist.
+  Discovery now treats missing directories as empty instead of erroring out.
+  (#347)
+- **One-shot rate detection for all non-Claude providers.** Retry detection
+  now sees multi-message flows correctly across providers, not only Claude.
+  Follow-up to the v0.9.9 fix. (#355)
+- **Cursor `#cursor-ws=` compound-path separator in `fingerprintFile`.**
+  `session-cache.ts` only handled the OpenCode `:` separator, so Cursor's
+  workspace-aware paths could fall back incorrectly. The fingerprint now
+  strips both `#` and `:` compound suffixes. Thanks @renerichter. (#358)
+- **Per-provider multi-day data loss, division-by-zero, and decode
+  fragility.** Switching to Claude/Codex tab on 7-day/30-day/month periods
+  previously only showed today's categories, models, sessions, and tokens
+  because the cache shortcut only merged cost/calls. Per-provider periods now
+  always do a full parse. Also floors `maxCost` at 0.01 to avoid NaN bar
+  widths in ActivitySection and ModelsSection. (#362)
+
+### Fixed (macOS menubar)
+- **Per-provider refresh latency.** Switching provider tabs took ~24s on heavy
+  histories. Now ~2s via session cache safety and reuse. (#344)
 
 ## 0.9.9 - 2026-05-15
 
