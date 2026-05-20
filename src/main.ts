@@ -558,8 +558,8 @@ program
           }
         })
       } else {
-        const fallbackDays = aggregateProjectsIntoDays(scanProjects)
-        dailyHistory = fallbackDays.map(d => {
+        const emptyModels = [] as { name: string; cost: number; calls: number; inputTokens: number; outputTokens: number }[]
+        const historyFromCache = allCacheDays.map(d => {
           const prov = d.providers[pf] ?? { calls: 0, cost: 0 }
           return {
             date: d.date,
@@ -569,9 +569,25 @@ program
             outputTokens: 0,
             cacheReadTokens: 0,
             cacheWriteTokens: 0,
-            topModels: [] as { name: string; cost: number; calls: number; inputTokens: number; outputTokens: number }[],
+            topModels: emptyModels,
           }
         })
+        const todayFromParse = aggregateProjectsIntoDays(scanProjects)
+          .filter(d => d.date === todayStr)
+          .map(d => {
+            const prov = d.providers[pf] ?? { calls: 0, cost: 0 }
+            return {
+              date: d.date,
+              cost: prov.cost,
+              calls: prov.calls,
+              inputTokens: 0,
+              outputTokens: 0,
+              cacheReadTokens: 0,
+              cacheWriteTokens: 0,
+              topModels: emptyModels,
+            }
+          })
+        dailyHistory = [...historyFromCache, ...todayFromParse]
       }
 
       const home = homedir()
