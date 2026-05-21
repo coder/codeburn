@@ -73,7 +73,7 @@ type ExchangeToolInfo = {
 }
 
 function sanitizeProject(path: string): string {
-  return path.replace(/^\/+/, '').replace(/\//g, '-')
+  return path.split('/').filter(Boolean).pop() || path
 }
 
 function warpDbPath(bundleId: string): string {

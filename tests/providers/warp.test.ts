@@ -204,7 +204,7 @@ skipUnlessSqlite('warp provider', () => {
     expect(sessions).toHaveLength(1)
     expect(sessions[0]!.provider).toBe('warp')
     expect(sessions[0]!.path).toBe(`${dbPath}:conv-1`)
-    expect(sessions[0]!.project).toBe('Users-test-project-a')
+    expect(sessions[0]!.project).toBe('project-a')
   })
 
   it('parses one call per completed exchange and estimates tokens from primary-agent totals', async () => {
@@ -263,7 +263,7 @@ skipUnlessSqlite('warp provider', () => {
     expect(calls.reduce((sum, call) => sum + call.inputTokens, 0)).toBe(300)
     expect(calls[1]!.inputTokens).toBeGreaterThan(calls[0]!.inputTokens)
     expect(calls[0]!.projectPath).toBe('/Users/test/project-a')
-    expect(calls[0]!.project).toBe('Users-test-project-a')
+    expect(calls[0]!.project).toBe('project-a')
   })
 
   it('attributes command blocks to the nearest preceding exchange and extracts Bash commands', async () => {
