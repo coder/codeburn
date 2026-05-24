@@ -148,6 +148,8 @@ private struct CalendarPopover: View {
                 Button {
                     if !pending.isEmpty {
                         store.switchTo(days: pending)
+                    } else {
+                        store.switchTo(period: store.selectedPeriod)
                     }
                     isPresented = false
                 } label: {
