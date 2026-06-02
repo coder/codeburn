@@ -124,8 +124,6 @@ Arrow keys switch between Today, 7 Days, 30 Days, Month, and 6 Months (use `--fr
 
 Each provider doc lists the exact data location, storage format, and known quirks. Linux and Windows paths are detected automatically. If a path has changed or is wrong, please [open an issue](https://github.com/getagentseal/codeburn/issues).
 
-Provider logos are trademarks of their respective owners. The icon set was sourced from [tokscale](https://github.com/junhoyeo/tokscale) (MIT), official vendor assets, and simple provider identifiers, used under nominative fair use for the purpose of identifying supported tools.
-
 CodeBurn auto-detects which AI coding tools you use. If multiple providers have session data on disk, press `p` in the dashboard to toggle between them.
 
 The `--provider` flag filters any command to a single provider: `codeburn report --provider claude`, `codeburn today --provider codex`, `codeburn export --provider cursor`. Works on all commands: `report`, `today`, `month`, `status`, `export`, `optimize`, `compare`, `yield`.
