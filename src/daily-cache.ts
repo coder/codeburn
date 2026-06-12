@@ -226,13 +226,6 @@ export async function ensureCacheHydrated(
       }
     }
 
-    const hadYesterday = c.days.some(d => d.date >= yesterdayStr)
-    if (hadYesterday) {
-      const freshDays = c.days.filter(d => d.date < yesterdayStr)
-      const latestFresh = freshDays.length > 0 ? freshDays[freshDays.length - 1].date : null
-      c = { ...c, days: freshDays, lastComputedDate: latestFresh }
-    }
-
     const gapStart = c.lastComputedDate
       ? new Date(
           parseInt(c.lastComputedDate.slice(0, 4)),
